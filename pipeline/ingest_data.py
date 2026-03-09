@@ -1,4 +1,5 @@
 import pandas as pd
+import click
 from sqlalchemy import create_engine
 
 dtype = {
@@ -27,25 +28,23 @@ parse_dates = [
     ]
 
 
-def run():
-    year=2021
-    month=1
-
-    pg_user="root"
-    pg_pass="root"
-    pg_host="localhost"
-    pg_port="5432"
-    pg_db="ny_taxi"
+@click.command()
+@click.option("--pg-user", default="root", show_default=True, type=str, help="Postgres username.")
+@click.option("--pg-pass", default="root", show_default=True, type=str, help="Postgres password.")
+@click.option("--pg-host", default="localhost", show_default=True, type=str, help="Postgres host.")
+@click.option("--pg-port", default="5432", show_default=True, type=str, help="Postgres port.")
+@click.option("--pg-db", default="ny_taxi", show_default=True, type=str, help="Postgres database name.")
+@click.option("--chunksize", default=100000, show_default=True, type=int, help="Rows per chunk to stream from CSV.")
+@click.option("--target-table", default="yellow_taxi_data", show_default=True, type=str, help="Target table name in Postgres.")
+@click.option("--year", default=2021, show_default=True, type=int, help="Dataset year to download.")
+@click.option("--month", default=1, show_default=True, type=int, help="Dataset month to download (1-12).")
+def run(pg_user, pg_pass, pg_host, pg_port, pg_db, chunksize, target_table, year, month):
+    """Download NYC yellow taxi data and load it into Postgres."""
 
     prefix = 'https://github.com/DataTalksClub/nyc-tlc-data/releases/download/yellow/'
     url=prefix + f'yellow_tripdata_{year}-{month:02d}.csv.gz'
 
     engine=create_engine(f'postgresql+psycopg://{pg_user}:{pg_pass}@{pg_host}:{pg_port}/{pg_db}')
-
-    chunksize=100000
-    target_table="yellow_taxi_data"
-
-    
 
     df_iter = pd.read_csv(
         url,
